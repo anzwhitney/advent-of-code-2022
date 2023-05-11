@@ -11,7 +11,7 @@ def parse_elves(f):
     elves = defaultdict(list)
     for line in f:
         # a blank line indicates a new elf's inventory
-        if line == "":
+        if line == "\n":
             elf_id += 1
         # consecutive non-blank lines are appended to the current elf's
         # inventory
@@ -26,7 +26,7 @@ def most_calories(elves):
     max_cals = 0
     max_elf = None
 
-    for elf_id, inventory in elves:
+    for elf_id, inventory in elves.items():
         cals = sum(inventory)
         if cals > max_cals:
             max_cals = cals
