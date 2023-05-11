@@ -6,6 +6,7 @@ def print_usage():
     sys.exit(0)
 
 def parse_elves(f):
+    """Parse a list of elves' calorie inventories from an iterable f."""
     elf_id = 0
     elves = defaultdict(list)
     for line in f:
@@ -18,6 +19,20 @@ def parse_elves(f):
             elves[elf_id].append(int(line))
 
     return elves
+
+def most_calories(elves):
+    """Determine the index and calorie total of the elf with the most calories.
+    """
+    max_cals = 0
+    max_elf = None
+
+    for elf_id, inventory in elves:
+        cals = sum(inventory)
+        if cals > max_cals:
+            max_cals = cals
+            max_elf = elf_id
+
+    return max_elf, max_cals
 
 if __name__ == "__main__":
     if sys.argv[1] == "help":
