@@ -27,7 +27,7 @@ class ElfInventories:
                 heapq.heappush(self._cal_totals, (sum(inventory), elf_id))
 
         # TODO: determine whether this usage of nlargest actually gets the
-        # benefits of the pre-heapification.
+        # benefits of the pre-heapification
         top_n = heapq.nlargest(n, self._cal_totals)
         total = sum(cals for cals, _ in top_n)
         print(f"The top {n} elves by calorie total are:")
@@ -35,21 +35,28 @@ class ElfInventories:
             print(f"{rank}. Elf #{elf[1]} ({elf[0]} cals)")
         print(f"Altogether, that's {total} calories.")
 
-def print_usage():
-    print("Usage: python most_calories.py input_filename")
-    sys.exit(0)
+def print_usage_and_exit(code):
+    print("Usage: python most_calories.py input_filename n")
+    sys.exit(code)
 
 if __name__ == "__main__":
     if sys.argv[1] == "help":
-        print_usage()
-    input_filename = sys.argv[1]
+        print_usage_and_exit(0)
 
+    input_filename = sys.argv[1]
     try:
         f = open(input_filename, "r")
     except FileNotFoundError:
         print(f"File '{input_filename}' not found.")
-        print_usage()
+        print_usage_and_exit(1)
 
-    elves = parse_elves(f)
-    elf_id, cals = most_calories(elves)
-    print(f"Elf #{elf_id} is carrying the most calories ({cals}).")
+    try:
+        n = int(sys.argv[2])
+    except ValueError:
+        print(f"Invalid argument: {sys.argv[2]}. Please enter an integer.")
+        print_usage_and_exit(1)
+
+    elves = ElfInventories()
+    elves.parse_elves(f)
+    elves.print_top_n(n)
+    sys.exit(0)
