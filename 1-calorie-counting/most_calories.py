@@ -1,5 +1,4 @@
 import heapq
-import sys
 
 from collections import defaultdict
 
@@ -40,6 +39,8 @@ def print_usage_and_exit(code):
     sys.exit(code)
 
 if __name__ == "__main__":
+    import sys
+
     if sys.argv[1] == "help":
         print_usage_and_exit(0)
 
