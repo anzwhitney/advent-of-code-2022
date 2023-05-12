@@ -30,3 +30,11 @@ let guide_to_throws (guide : string list) : (throw * throw) list =
     | [ opp; self ] -> (str_to_throw opp, str_to_throw self)
   in
   List.map line_to_throws guide
+
+let total_score (guide : string list) : int =
+  (* Order doesn't matter, because addition is commutative, so we might as
+   * well use the tail-recursive rev_map in place of map *)
+  let scores =
+    List.rev_map (fun (opp, you) -> score you opp) (guide_to_throws guide)
+  in
+  List.fold_left ( + ) 0 scores
