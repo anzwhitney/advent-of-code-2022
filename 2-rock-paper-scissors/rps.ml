@@ -38,3 +38,33 @@ let total_score (guide : string list) : int =
     List.rev_map (fun (opp, you) -> score you opp) (guide_to_throws guide)
   in
   List.fold_left ( + ) 0 scores
+
+(* Part Two *)
+type outcome = Win | Loss | Draw
+
+let str_to_outcome (s : string) : outcome =
+  match s with
+  | "X" -> Loss
+  | "Y" -> Draw
+  | "Z" -> Win
+  | _ -> raise (Invalid_argument "no corresponding outcome")
+
+let outcome_to_throw (opponents : throw) (intended : outcome) : throw =
+  match opponents with
+  | Rock -> (
+      match intended with Win -> Paper | Draw -> Rock | Loss -> Scissors)
+  | Paper -> (
+      match intended with Win -> Scissors | Draw -> Paper | Loss -> Rock)
+  | Scissors -> (
+      match intended with Win -> Rock | Draw -> Scissors | Loss -> Paper)
+
+let line_to_throw_and_outcome (l : string) : throw * outcome =
+  match String.split_on_char ' ' l with
+  | [] | _ :: [] | _ :: _ :: _ :: _ ->
+      raise (Invalid_argument "line must contain exactly two entries")
+  | [ opp; out ] -> (str_to_throw opp, str_to_outcome out)
+
+let outcome_based_total_score (guide : string list) : int =
+  List.rev_map line_to_throw_and_outcome guide
+  |> List.rev_map (fun (opp, out) -> score (outcome_to_throw opp out) opp)
+  |> List.fold_left ( + ) 0
