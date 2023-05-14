@@ -1,22 +1,21 @@
-def shared_items(rucksack):
-    """Find the item types that appear in both compartments.
+def shared_item(rucksacks):
+    """Find the item type that appears in all provided rucksacks/compartments.
     In valid inputs there should be exactly one such item type.
 
     Args:
-        rucksack: string, sequence of item types indicated by letters.
+        rucksacks: string, sequences of item types indicated by letters.
 
-    Returns: set, intersection of the two compartments of the rucksack.
+    Returns: char, shared item between the given rucksacks or compartments.
+
+    Raises: ValueError if there is not exactly one shared item.
     """
-    # This rucksack representation is divided into two compartments at the
-    # halfway point.
-    size = len(rucksack)
-    if size % 2 != 0:
-        raise ValueError(
-            f"Compartments must be the same size, found invalid rucksack of size {size}.")
-    first_compartment = set(rucksack[:size//2])
-    second_compartment = set(rucksack[size//2:])
 
-    return first_compartment & second_compartment
+    shared = set(rucksacks[0]).intersection(*rucksacks)
+    if len(shared) != 1:
+        raise ValueError(
+            f"Invalid inputs '{rucksacks}' contain {len(shared)} shared items; must contain exactly one shared item.")
+
+    return shared.pop()
 
 
 def priority(item):
@@ -53,7 +52,7 @@ def calculate_shared_priority(rucksacks):
 
     Args:
         rucksacks: string iterable, each string a rucksack representation as
-        described in shared_items().
+        described above.
 
     Returns: int, sum of priorities of all items shared between the
     compartments of each rucksack.
@@ -65,11 +64,46 @@ def calculate_shared_priority(rucksacks):
         # Ignore empty lines
         if not items:
             continue
-        shared = shared_items(items)
-        if len(shared) != 1:
+        # This rucksack representation is divided into two compartments at the
+        # halfway point.
+        size = len(rucksack)
+        if size % 2 != 0:
             raise ValueError(
-                f"Invalid input '{rucksack}' contains {len(shared)} shared items; must contain exactly one shared item.")
-        total += priority(shared.pop())
+                f"Compartments must be the same size, found invalid rucksack of size {size}.")
+        first_compartment = set(rucksack[:size//2])
+        second_compartment = set(rucksack[size//2:])
+        shared = shared_item([first_compartment, second_compartment])
+        total += priority(shared)
+
+    return total
+
+
+def calculate_badge_priority(rucksacks, group_size=3):
+    """Sum the priorities of the badges of all groups of rucksacks.
+    The badge is the unique item shared between all members of the group.
+
+    Args:
+        rucksacks: string iterable, each string a rucksack representation as
+        described above.
+        group_size: int, default 3, the size of each group with a shared badge.
+
+    Returns: int, sum of priorities of all badges.
+    """
+    # The below algorithm needs to index into rucksacks, so turn it into a list
+    # (in case it's some other kind of iterable that's not indexable)
+    rucksacks = list(rucksacks)
+    total = 0
+    for i in range(0, len(rucksacks), group_size):
+        group = []
+        for j in range(group_size):
+            # Remove trailing newlines
+            items = rucksacks[i+j].rstrip()
+            # Ignore empty lines
+            if not items:
+                continue
+            group.append(items)
+        badge = shared_item(group)
+        total += priority(badge)
 
     return total
 
@@ -95,9 +129,9 @@ def badge_help():
 
 def read_file(filename):
     try:
-        f = open(input_filename, 'r')
+        f = open(filename, 'r')
     except FileNotFoundError:
-        print(f"File '{input_filename}' not found.")
+        print(f"File '{filename}' not found.")
         print_usage_and_exit(1)
 
     return f
@@ -110,21 +144,23 @@ if __name__ == "__main__":
         case "help":
             print_usage_and_exit(0)
         case "shared":
-            match sys.argv[2]:
-                case "help":
-                    shared_help()
+            if sys.argv[2] == "help":
+                shared_help()
+            else:
                 # If not "help", sys.argv[2] should be the filename to read
-                case _:
-                    f = read_file(sys.argv[2])
-                    total_priority = calculate_shared_priority(f)
-                    print(
-                        f"The total priority of all shared items is {total_priority}.")
-                    sys.exit(0)
+                f = read_file(sys.argv[2])
+                total_priority = calculate_shared_priority(f)
+                print(
+                    f"The total priority of all shared items is {total_priority}.")
+                sys.exit(0)
 
         case "badge":
-            case "help":
-                shared_help()
-            # If not "help", sys.argv[2] should be the filename to read
-            case _:
+            if sys.argv[2] == "help":
+                badge_help()
+            else:
+                # If not "help", sys.argv[2] should be the filename to read
                 f = read_file(sys.argv[2])
-                # TODO: implement badge functionality
+                badge_priority = calculate_badge_priority(f)
+                print(
+                    f"The total priority of all groups' badges is {badge_priority}.")
+                sys.exit(0)
