@@ -1,8 +1,10 @@
 (* TODO: factor this out into a util module to share between here and day 2 *)
-(* Source: https://www.reddit.com/r/ocaml/comments/z6ws71/comment/j0ui7us/ *)
+(* Adapted from
+ * https://www.reddit.com/r/ocaml/comments/z6ws71/comment/j0ui7us/ *)
 let read_lines file =
   In_channel.with_open_text file In_channel.input_all
   |> String.split_on_char '\n'
+  |> List.filter (fun s -> s <> "")
 
 module Section : Interval.COMPARABLE with type t = int = struct
   type t = int
@@ -49,7 +51,7 @@ let anon_fun filename = input_filename := filename
 let speclist = []
 
 let () = Arg.parse speclist anon_fun usage_msg;
-  let lines = read_lines input_filename in
+  let lines = read_lines !input_filename in
   let total = total_contained (List.map string_to_intervals lines) in
   print_string "There are ";
   print_int total;
