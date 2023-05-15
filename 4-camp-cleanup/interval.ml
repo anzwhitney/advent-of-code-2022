@@ -31,8 +31,8 @@ module type COMPARABLE = sig
   val compare : t -> t -> order
 end
 
-module MakeInterval (Point : COMPARABLE) : INTERVAL with type point = Point.t =
-struct
+module MakeClosedInterval (Point : COMPARABLE) :
+  INTERVAL with type point = Point.t = struct
   type point = Point.t
   type interval = point * point
   type relation = Disjoint | Overlaps | Contains
@@ -45,7 +45,7 @@ struct
 
   let endpoints (i : interval) : point * point = i
 
-  (* Assumes that all intervals are open, i.e., endpoints not included. *)
+  (* Intervals are closed, i.e., endpoints are included. *)
   let relation ((start1, end1) : interval) ((start2, end2) : interval) :
       relation =
     (* Whichever interval has the lesser start is A; the other is B. The cases
@@ -54,11 +54,11 @@ struct
      * separately without this helper function. *)
     let relation_nonshared_start eA sB eB =
       match Point.compare eA sB with
-      | Less | Equal -> Disjoint (* sA--eA/sB... or sA--eA  sB... *)
-      | Greater -> (
-          (* sA--sB...eB... *)
+      | Less -> Disjoint (* sA--eA  sB... *)
+      | Equal | Greater -> (
+          (* sA--eA/sB... or sA--sB...eB... *)
           match Point.compare eA eB with
-          | Less -> Overlaps (* sA--sB--eA--eB *)
+          | Less -> Overlaps (* sA--sB...eA--eB *)
           | Equal | Greater -> Contains)
       (* sA--sB...eB/eA or sA--sB...eB--eA *)
     in
@@ -68,14 +68,13 @@ struct
         match Point.compare end1 start2 with
         | Less ->
             raise (Failure "end of an interval cannot be less than its start")
-        | Equal -> Disjoint
-        (* s1/e1/s2... - disjoint because these are assumed to be open
-         * intervals, and if s1=s2 and e1=s2, then s1=e1, so interval 1 is
-         * empty. *)
-        | Greater ->
+        | Equal | Greater ->
             Contains
-            (* s1/s2--e1--e2, s1/s2--e1/e2, or s1/s2--e2--e1 - in all these 
-             * cases one interval contains the other. *))
+            (* s1/e1/s2..., s1/s2--e1--e2, s1/s2--e1/e2, or s1/s2--e2--e1 - in
+             * all these cases one interval contains the other (where s1 = e1 
+             * = s2, interval 1 contains a single element which is also 
+             * contained within interval 2, because these are closed 
+             * intervals. *))
     | Less -> relation_nonshared_start end1 start2 end2
     | Greater -> relation_nonshared_start end2 start1 end1
 
@@ -102,13 +101,3 @@ struct
     | Overlaps | Contains ->
         Some (outer_point Greater s1 s2, outer_point Less e1 e2)
 end
-
-module DiscreteTime : COMPARABLE with type t = int = struct
-  type t = int
-  type order = Less | Equal | Greater
-
-  let compare (t1 : t) (t2 : t) : order =
-    if t1 < t2 then Less else if t1 > t2 then Greater else Equal
-end
-
-module DiscreteTimeInterval = MakeInterval (DiscreteTime)
