@@ -1,4 +1,5 @@
-(* TODO: factor this out into a util module to share between here and day 2 *)
+(* TODO: factor this out into a util module to share between here and day 2
+ * (and presumably any other days I end up using OCaml for) *)
 (* Adapted from
  * https://www.reddit.com/r/ocaml/comments/z6ws71/comment/j0ui7us/ *)
 let read_lines file =
@@ -32,27 +33,32 @@ let string_to_intervals (s : string) : SI.interval * SI.interval =
     in
     (interval first, interval second)
 
-let total_contained (l : (SI.interval * SI.interval) list) : int =
+let total_contained (include_overlaps: bool) (l : (SI.interval * SI.interval) list) : int =
   let count_contained acc (a, b) =
     match SI.relation a b with
-    | Disjoint | Overlaps -> acc
+    | Disjoint -> acc
+    | Overlaps -> if include_overlaps then acc + 1 else acc
     | Contains -> acc + 1
   in
   List.fold_left count_contained 0 l
 
 
 (* Run from command line *)
-let usage_msg = "cleanup <input_filename>"
+let usage_msg = "cleanup [-include_overlaps] <input_filename>"
 
 let input_filename = ref ""
 
+let include_overlaps = ref false
+
 let anon_fun filename = input_filename := filename
 
-let speclist = []
+let speclist = [("-include_overlaps", Arg.Set include_overlaps, "Count intervals that overlap as well as ones that are fully contained.")]
 
 let () = Arg.parse speclist anon_fun usage_msg;
   let lines = read_lines !input_filename in
-  let total = total_contained (List.map string_to_intervals lines) in
+  let total = total_contained !include_overlaps (List.map string_to_intervals lines) in
   print_string "There are ";
   print_int total;
-  print_endline " assignment pairs where one range fully contains the other."
+  print_string " assignment pairs where one range";
+  if !include_overlaps then print_endline " overlaps the other."
+  else print_endline " fully contains the other."
